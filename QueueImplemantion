@@ -1,0 +1,140 @@
+package oy.interact.tira.student;
+
+import oy.interact.tira.util.QueueInterface;
+
+public class QueueImplemantion<E> implements QueueInterface<E> {
+
+    private Object[] itemArray = null;
+    private static final int DEFAULT_STACK_SIZE = 10;
+    private int capacity = DEFAULT_STACK_SIZE;
+    private int tail;
+    private int head;
+    private int count = 0;
+
+    public QueueImplemantion() {
+        this(DEFAULT_STACK_SIZE);
+    }
+
+    public QueueImplemantion(int size) {
+        capacity = size;
+        itemArray = new Object[size];
+        head = 0;
+        tail = 0;
+    }
+
+    @Override
+    public int capacity() {
+
+        if (itemArray == null) {
+            return 0;
+        } else {
+            return capacity;
+        }
+    }
+
+    @Override
+    public void enqueue(E element) throws OutOfMemoryError, NullPointerException {
+        if (element == null) {
+            throw new NullPointerException();
+        }
+        if (count == capacity) {
+            reallocate(capacity * 2);
+        }
+        if (tail >= capacity && head > 0) {
+            tail = 0;
+        }
+        itemArray[tail++] = element;
+        count += 1;
+
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public E dequeue() throws IllegalStateException {
+        if (isEmpty()) {
+            throw new IllegalStateException();
+        }
+        E x = (E) itemArray[head];
+        head += 1;
+        count -= 1;
+        if (head >= capacity) {
+            head = 0;
+        }
+        return (E) x;
+
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public E element() throws IllegalStateException {
+        if (isEmpty()) {
+            throw new IllegalStateException();
+        }
+        return (E) itemArray[head];
+    }
+
+    @Override
+    public int size() {
+        return count;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        if (count == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public void clear() {
+        itemArray = new Object[DEFAULT_STACK_SIZE];
+        tail = 0;
+        head = 0;
+        count = 0;
+    }
+
+    private void reallocate(int newCapacity) {
+        Object[] newitemArray = new Object[newCapacity];
+        int c = count;
+        int i = head;
+        int newArrayIndex = 0;
+        while (c > 0) {
+            newitemArray[newArrayIndex] = itemArray[i];
+            newArrayIndex++;
+            i++;
+            c--;
+            if (i >= capacity) {
+                i = 0;
+            }
+        }
+        capacity = newCapacity;
+        itemArray = newitemArray;
+        head = 0;
+        tail = count;
+
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        int i = head;
+        int c = count;
+        while (c > 0) {
+            sb.append(itemArray[i]);
+            if (c > 1) {
+                sb.append(", ");
+            }
+            i++;
+            c--;
+            if (i >= capacity) {
+                i = 0;
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+}
