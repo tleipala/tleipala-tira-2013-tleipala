@@ -1,0 +1,164 @@
+package oy.interact.tira.student;
+
+import java.util.function.Predicate;
+
+import oy.interact.tira.util.Pair;
+import oy.interact.tira.util.TIRAKeyedContainer;
+
+public class HashTableContainer<K extends Comparable<K>, V> implements TIRAKeyedContainer<K, V> {
+
+    private Pair<K, V>[] itemArray = null;
+    private static final int DEFAULT_HASH_SIZE = 10;
+    private static final double LOAD_FACTOR = 0.65;
+
+    private int count = 0;
+
+    private int collisionModifier = 0;
+    // private int maxProbingCount = 0;
+    private int pairsUpdated = 0;
+    private int currentProbingCount = 0;
+
+    public HashTableContainer() {
+        itemArray = (Pair<K, V>[]) new Pair[DEFAULT_HASH_SIZE];
+    }
+
+    @Override
+    public void add(K key, V value) throws OutOfMemoryError, IllegalArgumentException {
+
+        if (key == null || value == null) {
+            throw new IllegalArgumentException("null paramather in has hashcountainer.add()");
+        }
+        if (count >= itemArray.length * LOAD_FACTOR) {
+            reallocate((int) (itemArray.length / LOAD_FACTOR));
+        }
+
+        int hashIndex = key.hashCode();
+        boolean added = false;
+        int index = 0;
+        int hashModifier = 0;
+        currentProbingCount = 0;
+
+        do {
+            index = hashFunc(hashIndex, hashModifier);
+            if (itemArray[index] == null) {
+                itemArray[index] = new Pair<K, V>(key, value);
+                added = true;
+                count++;
+            } else if (itemArray[index].getKey().equals(key)) {
+                itemArray[index] = new Pair<K, V>(key, value);
+                pairsUpdated++;
+                added = true;
+            } else {
+                hashModifier++;
+                collisionModifier++;
+                currentProbingCount++;
+            }
+        } while (!added);
+
+    }
+
+    private int hashFunc(int hashIndex, int hashModifier) {
+        int k = 7;
+        int j = 16;
+        return ((hashIndex + k * hashModifier + j * (hashModifier * hashModifier) & 0x7FFFFFFF)) % itemArray.length;
+        // return ((hashIndex + collisionModifier) & 0x7FFFFFFF) % itemArray.length;
+
+    }
+
+    @Override
+    public V get(K key) throws IllegalArgumentException {
+
+        int hashModifier = 0;
+        int hashIndex = key.hashCode();
+        boolean done = false;
+        V result = null;
+        int index = 0;
+        // while(i < itemArray.length -1){
+        do {
+            index = hashFunc(hashIndex, hashModifier);
+            if (itemArray[index] == null) {
+                done = true;
+            } else if (itemArray[index].getKey().equals(key)) {
+                result = itemArray[index].getValue();
+                done = true;
+            } else {
+                hashModifier++;
+            }
+        } while (!done);
+
+        return result;
+
+    }
+
+    @Override
+    public V remove(K key) throws IllegalArgumentException {
+        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+    }
+
+    @Override
+    public V find(Predicate<V> searcher) {
+
+        for (int i = 0; i < itemArray.length; i++) {
+            if (itemArray[i] != null) {
+                if (searcher.test(itemArray[i].getValue())) {
+                    return itemArray[i].getValue();
+                }
+            }
+        }
+        return null;
+
+    }
+
+    @Override
+    public int size() {
+        return count;
+    }
+
+    @Override
+    public int capacity() {
+        return Integer.MAX_VALUE;
+
+    }
+
+    @Override
+    public void ensureCapacity(int capacity) throws OutOfMemoryError, IllegalArgumentException {
+        throw new UnsupportedOperationException("Unimplemented method 'ensureCapacity'");
+    }
+
+    @Override
+    public void clear() {
+        itemArray = (Pair<K, V>[]) new Pair[DEFAULT_HASH_SIZE];
+        int collisionModifier = 0;
+        int pairsUpdated = 0;
+        int maxProbingCount = 0;
+        int count = 0;
+    }
+
+    @Override
+    public Pair<K, V>[] toArray() throws Exception {
+        System.out.println("collisionModifier: " + collisionModifier);
+        System.out.println("currentProbingCount: " + currentProbingCount);
+
+        Pair<K, V>[] newArray = (Pair<K, V>[]) new Pair[count];
+        int k = 0;
+        for (int i = 0; i < itemArray.length; i++) {
+            if (itemArray[i] != null) {
+                newArray[k++] = itemArray[i];
+            }
+        }
+        return newArray;
+    }
+
+    private void reallocate(int newCapacity) {
+        Pair<K, V>[] olditemArray = itemArray;
+        itemArray = (Pair<K, V>[]) new Pair[newCapacity];
+        count = 0;
+
+        for (int i = 0; i < olditemArray.length; i++) {
+            if (olditemArray[i] != null) {
+                add(olditemArray[i].getKey(), olditemArray[i].getValue());
+            }
+        }
+    }
+
+}
