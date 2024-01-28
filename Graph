@@ -1,0 +1,424 @@
+package oy.interact.tira.student.graph;
+
+import java.io.IOException;
+//import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
+import java.util.Vector;
+
+import oy.interact.tira.student.graph.Edge.EdgeType;
+import oy.interact.tira.student.graph.Visit.Type;
+
+public class Graph<T> {
+
+   private Map<Vertex<T>, List<Edge<T>>> edgeList = null;
+   private Map<Integer, Vertex<T>> vertices = null;
+
+   public Graph() {
+
+      edgeList = new Hashtable<>();
+      vertices = new Hashtable<>();
+   }
+
+   // private Map<Vertex<T>, List<Edge<T>>> adjacencies;
+
+   public Vertex<T> createVertexFor(T element) {
+      Vertex<T> vertex = new Vertex<>(element);
+      edgeList.put(vertex, new Vector<>());
+      vertices.put(element.hashCode(), vertex);
+      return vertex;
+   }
+
+   public Set<Vertex<T>> getVertices() {
+      return edgeList.keySet();
+   }
+
+   public void addEdge(Edge.EdgeType type, Vertex<T> source, Vertex<T> destination, double weight) {
+      switch (type) {
+         case DIRECTED:
+            addDirectedEdge(source, destination, weight);
+            break;
+         case UNDIRECTED:
+            addDirectedEdge(source, destination, weight);
+            addDirectedEdge(destination, source, weight);
+            break;
+      }
+
+   }
+
+   public void addDirectedEdge(Vertex<T> source, Vertex<T> destination, double weight) {
+      Edge<T> edge = new Edge<T>(source, destination, weight);
+      edgeList.get(source).add(edge);
+
+   }
+
+   public List<Edge<T>> getEdges(Vertex<T> source) {
+      return edgeList.get(source);
+   }
+
+   public Vertex<T> getVertexFor(T element) {
+      return vertices.get(element.hashCode());
+      // Set<Vertex<T>> vertizes = edgeList.keySet();
+      // for (Vertex<T> vertex : vertizes) {
+      // if (vertex.getElement().equals(element)) {
+      // return vertex;
+      // }
+      // }
+      // return null;
+   }
+
+   public List<Vertex<T>> breadthFirstSearch(Vertex<T> from, Vertex<T> target) {
+
+      // Queue<Vertex<T>> queue = new ;
+      Queue<Vertex<T>> queue = new LinkedList<>();
+      Set<Vertex<T>> enqueued = new HashSet<>();
+      // Vector<Vertex<T>> visited = new Vector<>();
+      List<Vertex<T>> visited = new Vector<>();
+
+      queue.add(from);
+      enqueued.add(from);
+
+      while (!queue.isEmpty()) {
+         Vertex<T> vertex = queue.peek();
+         queue.poll();
+         visited.add(vertex);
+         List<Edge<T>> neighborEdges = edgeList.get(vertex);
+
+         // neighborEdges = naapuri asemat
+         // edge = reunat esim. Oululla se on mm. Kuopio.
+
+         // Oulu -> Kuopio
+         // Oulu -> Jyväskylä
+         // niin edelleen.
+         // Kun kaikki käsitelty, niin sitten
+         // jonon ensimmäinen eli Kuopio
+         // Kuopio -> Oulu (Oulu on käsitelty, ei laiteta enää jonoon)
+         // Kuopio -> Joensuu
+         // Kuopio -> Jyväskylä (Jyväskylä on käsitelty, ei laiteta enää jonoon)
+         // Kuopio - Lahti
+         // Niin edelleen
+
+         for (Edge<T> edge : neighborEdges) {
+            Vertex<T> destination = edge.getDestination();
+            if (!enqueued.contains(destination)) {
+               // queue = on käsitelty
+               queue.add(destination);
+               // enqueud = laitetaan käsittely jonoon.
+               enqueued.add(destination);
+            }
+         }
+      }
+      return visited;
+   }
+
+   public List<Vertex<T>> depthFirstSearch(Vertex<T> from, Vertex<T> target) {
+      Stack<Vertex<T>> stack = new Stack<>();
+      Set<Vertex<T>> pushed = new HashSet<>();
+      List<Vertex<T>> visited = new Vector<>();
+
+      stack.push(from);
+      pushed.add(from);
+      visited.add(from);
+
+      while (!stack.isEmpty()) {
+         List<Edge<T>> neighbours = getEdges(stack.peek());
+         // Jos ei ole mitään naapureita, niin otetaan pois
+         // Jos kaikki naapurit ovat käsitelty, niin otetaan pois stackista
+         if (neighbours.size() == 0) {
+            stack.pop();
+            continue;
+         } else {
+            boolean continueOuter = false;
+            for (Edge<T> edge : neighbours) {
+               // 1.Ensimmäiseksi on Oulu ja sen lähin naapuri Kuopio
+               // 2.Kuopion ensimmäinen reuna Oulu, ja sen on jo tallessa
+               // Seuraava reuna Joensuu
+               // Seuraava reuna Jyväskylä
+               // Seuraava reuna Tampere
+               // Ja niin edelleen
+               if (!pushed.contains(edge.getDestination())) {
+                  // Laitetaan stackiin
+                  stack.push(edge.getDestination());
+                  // Laitetaan pushediin
+                  pushed.add(edge.getDestination());
+                  // Laitetaan vierailulistaan
+                  visited.add(edge.getDestination());
+                  // 1.Kuopio päällimmäinen
+                  // 2.Joensuu päällimmäinen
+                  // 3.Jyväskylä päällimmäinen
+                  continueOuter = true;
+                  break;
+               }
+            }
+            if (continueOuter) {
+               continue;
+            }
+         }
+         stack.pop();
+
+      }
+
+      return visited;
+   }
+
+   public List<T> disconnectedVertices(Vertex<T> toStartFrom) {
+      List<T> notInVisited = new Vector<>();
+      List<Vertex<T>> visited = new Vector<>();
+
+      if (toStartFrom == null) {
+         toStartFrom = edgeList.keySet().iterator().next();
+      }
+
+      visited = breadthFirstSearch(toStartFrom, null);
+
+      for (Vertex<T> vertex : getVertices()) {
+         if (!visited.contains(vertex)) {
+            notInVisited.add(vertex.getElement());
+         }
+
+      }
+
+      return notInVisited;
+
+   }
+
+   public boolean isDisconnected(Vertex<T> toStartFrom) {
+      if (toStartFrom == null) {
+         toStartFrom = edgeList.keySet().iterator().next();
+      }
+
+      List<T> disc = disconnectedVertices(toStartFrom);
+
+      if (!disc.isEmpty()) {
+         return true;
+      }
+      return false;
+   }
+
+   public boolean hasCycles(EdgeType edgeType, Vertex<T> fromVertex) {
+
+      if (edgeType == EdgeType.DIRECTED) {
+         if (fromVertex == null) {
+            fromVertex = edgeList.keySet().iterator().next();
+         }
+         Set<Vertex<T>> visitedVertex = new HashSet<>();
+         return recursiveHasCycles(fromVertex, visitedVertex);
+
+      }
+      return false;
+
+   }
+
+   private boolean recursiveHasCycles(Vertex<T> fromVertex, Set<Vertex<T>> visitedVertex) {
+      visitedVertex.add(fromVertex);
+
+      for (Edge<T> edge : getEdges(fromVertex)) {
+         if (visitedVertex.contains(edge.getDestination())) {
+            return true;
+         } else if (recursiveHasCycles(edge.getDestination(), visitedVertex)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   // Dijkstra starts here.
+
+   /**
+    * The result of the Dijkstra's search.
+    */
+   public class DijkstraResult<E> {
+      public boolean pathFound = false;
+      public List<E> path;
+      public int steps = 0;
+      public double totalWeigth = 0.0;
+
+      @Override
+      public String toString() {
+         StringBuilder builder = new StringBuilder();
+         builder.append(String.format("Dikstra result:\n- Path found: %s%n", (pathFound ? "yes" : "no")));
+         if (pathFound) {
+            builder.append(String.format("- steps: %d%n", steps));
+            builder.append(String.format("- total edge weights: %.2f%n", totalWeigth));
+            if (null != path) {
+               builder.append(String.format("- path: %s", path.toString()));
+            } else {
+               builder.append("Path not found\n");
+            }
+         }
+         return builder.toString();
+      }
+   }
+
+   // Etsii lyhyimmät polut aloituspisteestä
+
+   private Map<Vertex<T>, Visit<T>> shortestPathsFrom(Vertex<T> start) {
+      Visit<T> visit = new Visit<>();
+      visit.type = Visit.Type.START;
+      Map<Vertex<T>, Visit<T>> paths = new HashMap<>();
+
+      paths.put(start, visit);
+
+      PriorityQueue<Vertex<T>> priorityQueue = new PriorityQueue<>(new PathWeightComparator(this, paths));
+      priorityQueue.add(start);
+
+      while (!priorityQueue.isEmpty()) {
+         Vertex<T> vertex = priorityQueue.poll();
+         Iterable<Edge<T>> edges = getEdges(vertex);
+
+         for (Edge<T> edge : edges) {
+            double weight = edge.getWeigth();
+
+            if (!paths.containsKey(edge.getDestination()) ||
+                  distance(vertex, paths) + weight < distance(edge.getDestination(), paths)) {
+               Visit<T> edgeVisit = new Visit<>();
+               edgeVisit.type = Type.EDGE;
+               edgeVisit.edge = edge;
+               paths.put(edge.getDestination(), edgeVisit);
+               priorityQueue.add(edge.getDestination());
+            }
+         }
+
+      }
+
+      return paths;
+   }
+
+   private class PathWeightComparator implements Comparator<Vertex<T>> {
+
+      PathWeightComparator(Graph<T> graph, Map<Vertex<T>, Visit<T>> paths) {
+         this.graph = graph;
+         this.paths = paths;
+      }
+
+      public int compare(Vertex<T> lhs, Vertex<T> rhs) {
+         return (int) (graph.distance(lhs, paths) - graph.distance(rhs, paths));
+         // if(key.compareTo(this.key) <= 0){
+      }
+
+      Graph<T> graph;
+      Map<Vertex<T>, Visit<T>> paths;
+
+   }
+
+   // Löytää lyhimmän reitin alusta loppuun Dijkstran algoritmin avulla
+
+   public DijkstraResult<T> shortestPathDijkstra(Vertex<T> start, Vertex<T> end) {
+
+      DijkstraResult<T> result = new DijkstraResult<>();
+      result.pathFound = false;
+      result.path = null;
+      result.steps = 0;
+      result.totalWeigth = 0.0;
+
+      Map<Vertex<T>, Visit<T>> paths;
+      paths = shortestPathsFrom(start);
+
+      if (paths != null && !paths.isEmpty()) {
+         List<Edge<T>> routeToEnd = route(end, paths);
+         if (routeToEnd != null && !routeToEnd.isEmpty()) {
+            result.steps = routeToEnd.size();
+            result.pathFound = true;
+            List<T> routeList = new Vector<>();
+            routeList.add(routeToEnd.get(0).getSource().getElement());
+            for (Edge<T> edge : routeToEnd) {
+               routeList.add(edge.getDestination().getElement());
+               result.totalWeigth += edge.getWeigth();
+
+            }
+            result.path = routeList;
+         }
+
+      }
+
+      return result;
+   }
+
+   // Löytää reitin määränpäähän annettuja polkuja käyttäen
+
+   private List<Edge<T>> route(Vertex<T> toDestination, Map<Vertex<T>, Visit<T>> paths) {
+      Vertex<T> vertex = toDestination;
+      List<Edge<T>> path = new Vector<>();
+
+      if (paths.size() == 0) {
+         return path;
+      }
+
+      Visit<T> visit = paths.get(vertex);
+      while (visit.type != Type.START) {
+         path.add(0, visit.edge);
+         vertex = visit.edge.getSource();
+         visit = paths.get(vertex);
+      }
+      return path;
+   }
+
+   // laskee etäisyyden määränpäähän annettuja polkuja käyttäen
+
+   private double distance(Vertex<T> toDestination, Map<Vertex<T>, Visit<T>> viaPath) {
+      List<Edge<T>> path = route(toDestination, viaPath);
+      double distance = 0.0;
+      for (Edge<T> edge : path) {
+         distance += edge.getWeigth();
+      }
+      return distance;
+   }
+
+   public void toDotBFS(Vertex<T> from, String outputFileName) throws IOException {
+   }
+
+   // to interate over vertices and edges in one situation.
+   // If you use some other name for your edge list than edgeList, then
+   // rename that in the code below! Otherwise you will have compiler errors.
+   /**
+    * Provides a string representation of the graph, printing out the vertices and
+    * edges.
+    * <p>
+    * Quite useful if you need to debug issues with algorithms. You can see is the
+    * graph
+    * what it is supposed to be like.
+    * <p>
+    * Simple graph as a string would look like this:<br/>
+    * 
+    * <pre>
+    * Created simple undirected graph where integers are vertice values:
+    * [1] -> [ 2 ]
+    * [2] -> [ 1, 3, 4, 5 ]
+    * [3] -> [ 2, 4, 5 ]
+    * [4] -> [ 2, 3, 5 ]
+    * [5] -> [ 2, 3, 4 ]
+    * </pre>
+    * 
+    * @return The graph as a string.
+    */
+   @Override
+   public String toString() {
+      // return ""; // Remove this and uncomment code below when you are ready.
+      StringBuilder output = new StringBuilder();
+      for (Map.Entry<Vertex<T>, List<Edge<T>>> entry : edgeList.entrySet()) {
+         output.append("[");
+         output.append(entry.getKey().toString());
+         output.append("] -> [ ");
+         int counter = 0;
+         int count = entry.getValue().size();
+         for (Edge<T> edge : entry.getValue()) {
+            output.append(edge.getDestination().toString());
+            if (counter < count - 1) {
+               output.append(", ");
+            }
+            counter++;
+         }
+         output.append(" ]\n");
+      }
+      return output.toString();
+   }
+}
