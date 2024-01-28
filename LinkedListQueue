@@ -1,0 +1,119 @@
+package oy.interact.tira.student;
+
+import oy.interact.tira.util.QueueInterface;
+
+public class LinkedListQueue<E> implements QueueInterface<E> {
+
+    public static class Node<E> {
+
+        public E element;
+        public Node<E> next;
+
+        public Node(E element) {
+            this.element = element;
+            next = null;
+        }
+    }
+
+    private Node<E> head;
+    private Node<E> tail;
+    private int count;
+
+    public LinkedListQueue() {
+        head = null;
+        tail = null;
+        count = 0;
+    }
+
+    @Override
+    public int capacity() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public void enqueue(E element) throws OutOfMemoryError, NullPointerException {
+        if (element == null) {
+            throw new NullPointerException();
+        }
+        if (head == null) {
+            Node<E> newElement = new Node<>(element);
+            head = newElement;
+            tail = newElement;
+            count = 1;
+            return;
+        }
+        Node<E> newElement = new Node<>(element);
+        tail.next = newElement;
+        // newElement.previous = tail;
+        tail = newElement;
+        count++;
+    }
+
+    @Override
+    public E dequeue() throws IllegalStateException {
+
+        if (head == null) {
+            throw new IllegalStateException();
+        }
+        Node<E> newElement = head;
+        head = head.next;
+
+        if (head == null) {
+            tail = null;
+
+        }
+        count--;
+        return newElement.element;
+    }
+
+    // https://www.geeksforgeeks.org/queue-linked-list-implementation/
+
+    @Override
+    public E element() throws IllegalStateException {
+
+        if (isEmpty()) {
+            throw new IllegalStateException();
+        }
+        return (E) head.element;
+    }
+
+    @Override
+    public int size() {
+        return count;
+    }
+
+    @Override
+    public boolean isEmpty() {
+
+        if (count == 0) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    @Override
+    public void clear() {
+        head = null;
+        tail = null;
+        count = 0;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        Node<E> current = head;
+        while (current != null) {
+            sb.append(current.element);
+            if (current.next != null) {
+                sb.append(", ");
+            }
+            current = current.next;
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+}
