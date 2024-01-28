@@ -1,0 +1,61 @@
+package oy.interact.tira.student;
+
+import oy.interact.tira.util.StackInterface;
+
+public class ParenthesisChecker {
+
+   private ParenthesisChecker() {
+   }
+
+   public static int checkParentheses(StackInterface<Character> stack, String fromString) throws ParenthesesException {
+
+      int numberLine = 1;
+      int numbercolumn = 1;
+      int parantesis = 0;
+
+      for (int i = 0; i < fromString.length(); i++) {
+         char c = fromString.charAt(i);
+         char open;
+
+         if (c == '\n') {
+            numberLine++;
+            numbercolumn = 0;
+         }
+         if (c == '"') {
+            do {
+               i++;
+               c = fromString.charAt(i);
+               numbercolumn++;
+            } while (c != '"');
+
+         } else if (c == '(' || c == '[' || c == '{') {
+            parantesis++;
+            try {
+               stack.push(c);
+            } catch (OutOfMemoryError e) {
+               throw new ParenthesesException("Push failure", numberLine, numbercolumn,
+                     ParenthesesException.STACK_FAILURE);
+            }
+
+         } else if (c == ')' || c == ']' || c == '}') {
+            parantesis++;
+            try {
+               open = stack.pop();
+            } catch (IllegalStateException e) {
+               throw new ParenthesesException("Too many closing parantesis", numberLine, numbercolumn,
+                     ParenthesesException.TOO_MANY_CLOSING_PARENTHESES);
+            }
+            if (!((open == '(' && c == ')') || (open == '[' && c == ']') || (open == '{' && c == '}'))) {
+               throw new ParenthesesException("Wrong kind of parenthesis", numberLine, numbercolumn,
+                     ParenthesesException.PARENTHESES_IN_WRONG_ORDER);
+            }
+         }
+         numbercolumn++;
+      }
+      if (!stack.isEmpty()) {
+         throw new ParenthesesException("Too many opening paranthesus", numberLine, numbercolumn,
+               ParenthesesException.TOO_MANY_OPENING_PARENTHESES);
+      }
+      return parantesis;
+   }
+}
