@@ -1,0 +1,194 @@
+package oy.interact.tira.student;
+
+import java.util.Comparator;
+import java.util.function.Predicate;
+
+import oy.interact.tira.util.Pair;
+import oy.interact.tira.util.TIRAKeyedOrderedContainer;
+import oy.interact.tira.util.Visitor;
+
+public class BinarySearchTreeContainer<K extends Comparable<K>, V> implements TIRAKeyedOrderedContainer<K, V> {
+
+    private TreeNode<K, V> root;
+    private int count;
+    private int maxDepth;
+    public static int addDepth = 0;
+
+    private Comparator<K> comparator; // The comparator used to determine if new node will go to left or right
+                                      // subtree.
+
+    public BinarySearchTreeContainer(Comparator<K> comparator) {
+        this.comparator = comparator;
+    }
+
+    @Override
+    public void add(K key, V value) throws OutOfMemoryError, IllegalArgumentException {
+
+        if (key == null || value == null) {
+            throw new IllegalArgumentException();
+        }
+        if (root == null) {
+            root = new TreeNode<K, V>(key, value, comparator);
+            count++;
+            maxDepth = 1;
+        } else {
+            TreeNode.addDepth = 1;
+            if (root.insert(key, value)) {
+                maxDepth = Math.max(maxDepth, TreeNode.addDepth);
+                count++;
+            }
+        }
+    }
+
+    @Override
+    public V get(K key) throws IllegalArgumentException {
+        if (root == null) {
+            return null;
+        }
+        return root.find(key);
+
+    }
+
+    @Override
+    public V remove(K key) throws IllegalArgumentException {
+        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+    }
+
+    @Override
+    public V find(Predicate<V> searcher) {
+        if (root == null) {
+            return null;
+        }
+        return root.find(searcher);
+
+    }
+
+    @Override
+    public int size() {
+        return count;
+
+    }
+
+    @Override
+    public int capacity() {
+        return Integer.MAX_VALUE;
+
+    }
+
+    @Override
+    public void ensureCapacity(int capacity) throws OutOfMemoryError, IllegalArgumentException {
+
+    }
+
+    @Override
+    public void clear() {
+        root = null;
+        count = 0;
+
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Pair<K, V>[] toArray() throws Exception {
+        System.out.println("maxDepth: " + maxDepth);
+        Pair<K, V>[] array = (Pair<K, V>[]) new Pair[count];
+        if (root == null) {
+            return array;
+        }
+        int[] arrayIndex = { 0 };
+        root.toArray(array, arrayIndex);
+        return array;
+
+    }
+
+    @Override
+    public int indexOf(K itemKey) {
+        if (null == root) {
+            return -1;
+        }
+        int index = 0;
+        StackImplementation<TreeNode<K, V>> nodeStack = new StackImplementation<>();
+        TreeNode<K, V> current = root;
+        TreeNode<K, V> parent = null;
+
+        while (!nodeStack.isEmpty() || current != null) {
+            if (current != null) {
+                nodeStack.push(current);
+                parent = current;
+                current = current.left();
+            } else {
+                parent = nodeStack.pop();
+                current = parent.right();
+                if (comparator.compare(parent.getKey(), itemKey) == 0) {
+                    // if(parent.getKey().compareTo(itemKey) == 0){
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public Pair<K, V> getIndex(int index) throws IndexOutOfBoundsException {
+        if (index < 0 || index >= count) {
+            throw new IndexOutOfBoundsException("null");
+        }
+        int currentIndex = 0;
+        StackImplementation<TreeNode<K, V>> nodeStack = new StackImplementation<>();
+        TreeNode<K, V> current = root;
+        TreeNode<K, V> parent = null;
+
+        while (!nodeStack.isEmpty() || current != null) {
+            if (current != null) {
+                nodeStack.push(current);
+                parent = current;
+                current = current.left();
+            } else {
+                parent = nodeStack.pop();
+                current = parent.right();
+                if (currentIndex == index) {
+                    return new Pair<K, V>(parent.getKey(), parent.getValue());
+                }
+                currentIndex++;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public int findIndex(Predicate<V> searcher) {
+        if (null == root) {
+            return -1;
+        }
+        int index = 0;
+        StackImplementation<TreeNode<K, V>> nodeStack = new StackImplementation<>();
+        TreeNode<K, V> current = root;
+        TreeNode<K, V> parent = null;
+
+        while (!nodeStack.isEmpty() || current != null) {
+            if (current != null) {
+                nodeStack.push(current);
+                parent = current;
+                current = current.left();
+            } else {
+                parent = nodeStack.pop();
+                current = parent.right();
+                if (searcher.test(parent.getValue())) {
+                    return index;
+                }
+                index++;
+            }
+
+        }
+
+        return -1;
+
+    }
+
+    @Override
+    public void accept(Visitor<K, V> visitor) throws Exception {
+        throw new UnsupportedOperationException("Unimplemented method 'accept'");
+    }
+
+}
