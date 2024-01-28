@@ -1,0 +1,123 @@
+package oy.interact.tira.student;
+
+import java.util.Comparator;
+import java.util.function.Predicate;
+
+import oy.interact.tira.util.Pair;
+
+public class TreeNode<K extends Comparable<K>, V> {
+
+    public static int addDepth = 0;
+
+    private K key;
+    private V value;
+    private TreeNode<K, V> leftChild = null;
+    private TreeNode<K, V> rightChild = null;
+
+    private Comparator<K> comparator;
+
+    public TreeNode(K key, V value, Comparator<K> comparator) {
+        this.key = key;
+        this.value = value;
+        this.comparator = comparator;
+    }
+
+    public boolean insert(K key, V value) {
+        if (this.value.equals(value)) {
+            this.key = key;
+            this.value = value;
+            return false;
+        }
+        boolean result = false;
+        if (comparator.compare(key, this.key) <= 0) {
+            // if(key.compareTo(this.key) <= 0){
+            if (this.leftChild == null) {
+                leftChild = new TreeNode<K, V>(key, value, comparator);
+                TreeNode.addDepth += 1;
+                result = true;
+            } else {
+                TreeNode.addDepth += 1;
+                result = leftChild.insert(key, value);
+                // this.left.add(node);
+            }
+        } else {
+            if (rightChild == null) {
+                rightChild = new TreeNode<K, V>(key, value, comparator);
+                TreeNode.addDepth += 1;
+                result = true;
+
+            } else {
+                TreeNode.addDepth += 1;
+                result = rightChild.insert(key, value);
+                // this.right.add(node);
+            }
+        }
+        return result;
+
+    }
+
+    public V find(K key) {
+
+        V result = null;
+        if (comparator.compare(this.key, key) == 0) {
+            // if(this.key.compareTo(key) == 0){
+            result = value;
+        } else if (comparator.compare(key, this.key) < 0) {
+            // } else if (key.compareTo(this.key) < 0) {
+            if (null != leftChild) {
+                result = leftChild.find(key);
+            }
+        } else {
+            if (null != rightChild) {
+                result = rightChild.find(key);
+            }
+        }
+        return result;
+
+    }
+
+    public V find(Predicate<V> searcher) {
+        V result = null;
+        if (null != leftChild) {
+            result = leftChild.find(searcher);
+        }
+        if (result != null) {
+            return result;
+        }
+        if (searcher.test(value)) {
+            result = this.value;
+            return result;
+        }
+        if (null != rightChild) {
+            result = rightChild.find(searcher);
+        }
+        return result;
+    }
+
+    public K getKey() {
+        return key;
+    }
+
+    public V getValue() {
+        return value;
+    }
+
+    public TreeNode<K, V> left() {
+        return leftChild;
+    }
+
+    public TreeNode<K, V> right() {
+        return rightChild;
+    }
+
+    public void toArray(Pair<K, V>[] array, int currentIndex[]) {
+        if (leftChild != null) {
+            leftChild.toArray(array, currentIndex);
+        }
+        array[currentIndex[0]++] = new Pair<K, V>(key, value);
+        if (rightChild != null) {
+            rightChild.toArray(array, currentIndex);
+        }
+    }
+
+}
